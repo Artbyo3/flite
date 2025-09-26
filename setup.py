@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="flite",
-    version="1.0.0",
+    version="1.0.1",
     author="Artbyo3",
     description="A CLI tool to generate Flask projects automatically",
     long_description=long_description,

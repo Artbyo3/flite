@@ -13,7 +13,7 @@ from .utils import print_success, print_error, print_info, print_warning
 from .simple_interactive import SimpleInteractiveMode as InteractiveMode
 
 @click.group()
-@click.version_option(version="1.0.0")
+@click.version_option(version="1.0.1")
 def main():
     """Flite - Flask Project Generator
     
@@ -67,13 +67,13 @@ def create(project_name, template, database, auth, api, frontend, interactive):
                 api=api,
                 frontend=frontend
             )
-            print_success(f"✅ Project '{project_name}' created successfully!")
-            print_info(f"📁 Location: {os.path.abspath(project_name)}")
-            print_info("🚀 To run the project:")
+            print_success(f"Project '{project_name}' created successfully!")
+            print_info(f"Location: {os.path.abspath(project_name)}")
+            print_info("To run the project:")
             print_info(f"   cd {project_name}")
             print_info("   flite run")
     except Exception as e:
-        print_error(f"❌ Error creating project: {str(e)}")
+        print_error(f" Error creating project: {str(e)}")
         sys.exit(1)
 
 @main.command()
@@ -85,7 +85,7 @@ def run(host, port, debug, interactive):
     """Run the current Flask project"""
     try:
         if not os.path.exists('run.py'):
-            print_error("❌ run.py not found. Make sure you're in a valid Flask project.")
+            print_error(" run.py not found. Make sure you're in a valid Flask project.")
             sys.exit(1)
         
         if interactive:
@@ -98,8 +98,8 @@ def run(host, port, debug, interactive):
                 port = run_options['port']
                 debug = run_options['debug']
         
-        print_info(f"🚀 Starting Flask server at http://{host}:{port}")
-        print_info("💡 Press Ctrl+C to stop the server")
+        print_info(f"Starting Flask server at http://{host}:{port}")
+        print_info("Press Ctrl+C to stop the server")
         
         # Detect and use .venv automatically
         if os.name == 'nt':  # Windows
@@ -110,10 +110,10 @@ def run(host, port, debug, interactive):
         # Fallback to system python if .venv doesn't exist
         if not os.path.exists(python_cmd):
             python_cmd = "python"
-            print_warning("⚠ .venv not found, using system Python")
+            print_warning(".venv not found, using system Python")
         else:
             from .colors import Colors
-            print_info(f"✓ Using virtual environment {Colors.BRIGHT_GREEN}(.venv){Colors.RESET} Python")
+            print_info(f"Using virtual environment {Colors.BRIGHT_GREEN}(.venv){Colors.BRIGHT_CYAN} Python")
         
         # Build command with venv python
         cmd = [python_cmd, "run.py", f"--host={host}", f"--port={port}"]
@@ -122,18 +122,18 @@ def run(host, port, debug, interactive):
         
         subprocess.run(cmd, shell=False)
     except Exception as e:
-        print_error(f"❌ Error running project: {str(e)}")
+        print_error(f" Error running project: {str(e)}")
         sys.exit(1)
 
 @main.command()
 def build():
     """Build the project for production"""
     try:
-        print_info("🔨 Building project for production...")
+        print_info("Building project for production...")
         
         # Verify we're in a valid project
         if not os.path.exists('requirements.txt'):
-            print_error("❌ requirements.txt not found. Make sure you're in a valid Flask project.")
+            print_error(" requirements.txt not found. Make sure you're in a valid Flask project.")
             sys.exit(1)
         
         # Create production file
@@ -146,11 +146,11 @@ if __name__ == "__main__":
     app.run()
 """)
         
-        print_success("✅ Project built for production!")
-        print_info("📁 wsgi.py file created")
-        print_info("🚀 To deploy to production, use a WSGI server like Gunicorn")
+        print_success("Project built for production!")
+        print_info("wsgi.py file created")
+        print_info("To deploy to production, use a WSGI server like Gunicorn")
     except Exception as e:
-        print_error(f"❌ Error building project: {str(e)}")
+        print_error(f" Error building project: {str(e)}")
         sys.exit(1)
 
 @main.command()
@@ -158,15 +158,15 @@ def init():
     """Initialize a Flask project in the current directory"""
     try:
         if os.path.exists('app') or os.path.exists('run.py'):
-            print_warning("⚠️  A Flask project already exists in this directory")
+            print_warning("A Flask project already exists in this directory")
             if not click.confirm("Continue anyway?"):
                 return
         
         generator = ProjectGenerator()
         generator.init_project()
-        print_success("✅ Flask project initialized in current directory!")
+        print_success("Flask project initialized in current directory!")
     except Exception as e:
-        print_error(f"❌ Error initializing project: {str(e)}")
+        print_error(f" Error initializing project: {str(e)}")
         sys.exit(1)
 
 @main.command()
@@ -194,7 +194,7 @@ def interactive():
             config['project_name']
         )
     except Exception as e:
-        print_error(f"❌ Error creating project: {str(e)}")
+        print_error(f" Error creating project: {str(e)}")
         sys.exit(1)
 
 if __name__ == '__main__':

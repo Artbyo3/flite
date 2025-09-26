@@ -76,25 +76,25 @@ class SimpleInteractiveMode:
             project_name = input(f"{UI.prompt('Project name')}: ").strip()
             
             if not project_name:
-                print_error("❌ Project name is required")
+                print_error(" Project name is required")
                 continue
             
             # Validate project name
             if not re.match(r'^[a-zA-Z0-9_-]+$', project_name):
-                print_error("❌ Name can only contain letters, numbers, hyphens and underscores")
+                print_error(" Name can only contain letters, numbers, hyphens and underscores")
                 continue
             
             if len(project_name) < 2:
-                print_error("❌ Name must be at least 2 characters long")
+                print_error(" Name must be at least 2 characters long")
                 continue
             
             if len(project_name) > 50:
-                print_error("❌ Name cannot be longer than 50 characters")
+                print_error(" Name cannot be longer than 50 characters")
                 continue
             
             # Check if directory already exists
             if os.path.exists(project_name):
-                print_warning(f"⚠️  Directory '{project_name}' already exists")
+                print_warning(f"  Directory '{project_name}' already exists")
                 overwrite_options = {
                     'yes': 'Yes - Overwrite existing directory',
                     'no': 'No - Choose a different name'

@@ -4,10 +4,31 @@ Professional terminal colors and formatting
 """
 
 import os
+import sys
 from colorama import init, Fore, Back, Style
 
 # Initialize colorama for cross-platform color support
 init(autoreset=True)
+
+# Detect if we're on Windows and handle Unicode issues
+IS_WINDOWS = os.name == 'nt'
+HAS_UNICODE_SUPPORT = True
+
+# Check if Windows console supports Unicode
+if IS_WINDOWS:
+    try:
+        # Try to set UTF-8 encoding for Windows console
+        if hasattr(sys.stdout, 'reconfigure'):
+            sys.stdout.reconfigure(encoding='utf-8')
+        elif hasattr(sys.stdout, 'encoding'):
+            # Check if current encoding supports Unicode
+            test_char = '✓'
+            try:
+                test_char.encode(sys.stdout.encoding)
+            except UnicodeEncodeError:
+                HAS_UNICODE_SUPPORT = False
+    except:
+        HAS_UNICODE_SUPPORT = False
 
 class Colors:
     """Terminal color constants"""
@@ -49,21 +70,37 @@ class UI:
     """UI components and styling functions"""
     
     @staticmethod
-    def header(text, width=80):
+    def header(text, width=None):
         """Create a styled header"""
-        border = "═" * width
-        padding = (width - len(text) - 2) // 2
-        header_line = f"║{' ' * padding}{text}{' ' * (width - len(text) - padding - 2)}║"
+        if width is None:
+            width = max(80, len(text) + 4)  # Auto-adjust width based on text length
         
-        return f"""
+        if HAS_UNICODE_SUPPORT:
+            border = "═" * width
+            padding = (width - len(text) - 2) // 2
+            remaining_space = width - len(text) - 2 - padding
+            header_line = f"║{' ' * padding}{text}{' ' * remaining_space}║"
+            
+            return f"""
 {Colors.BRIGHT_CYAN}╔{border}╗
 {header_line}
 ╚{border}╝{Colors.RESET}"""
+        else:
+            border = "=" * width
+            padding = (width - len(text) - 2) // 2
+            remaining_space = width - len(text) - 2 - padding
+            header_line = f"|{' ' * padding}{text}{' ' * remaining_space}|"
+            
+            return f"""
+{Colors.BRIGHT_CYAN}+{border}+
+{header_line}
++{border}+{Colors.RESET}"""
     
     @staticmethod
     def section_title(text):
         """Create a section title with underline"""
-        underline = "─" * len(text)
+        underline_char = "─" if HAS_UNICODE_SUPPORT else "-"
+        underline = underline_char * len(text)
         return f"\n{Colors.BRIGHT_WHITE}{Colors.BOLD}{text}{Colors.RESET}\n{Colors.CYAN}{underline}{Colors.RESET}\n"
     
     @staticmethod
@@ -73,21 +110,38 @@ class UI:
         max_content_width = max(len(line) for line in lines) if lines else 0
         box_width = max(width, max_content_width + 4, len(title) + 4 if title else 0)
         
-        # Top border
-        if title:
-            title_padding = (box_width - len(title) - 4) // 2
-            top = f"{Colors.BRIGHT_BLUE}┌─{title_padding * '─'} {Colors.BRIGHT_WHITE}{title}{Colors.BRIGHT_BLUE} {title_padding * '─'}─┐{Colors.RESET}"
+        if HAS_UNICODE_SUPPORT:
+            # Top border
+            if title:
+                title_padding = (box_width - len(title) - 4) // 2
+                top = f"{Colors.BRIGHT_BLUE}┌─{title_padding * '─'} {Colors.BRIGHT_WHITE}{title}{Colors.BRIGHT_BLUE} {title_padding * '─'}─┐{Colors.RESET}"
+            else:
+                top = f"{Colors.BRIGHT_BLUE}┌{'─' * (box_width - 2)}┐{Colors.RESET}"
+            
+            # Content lines
+            content_lines = []
+            for line in lines:
+                padding = box_width - len(line) - 4
+                content_lines.append(f"{Colors.BRIGHT_BLUE}│{Colors.RESET} {line}{' ' * padding} {Colors.BRIGHT_BLUE}│{Colors.RESET}")
+            
+            # Bottom border
+            bottom = f"{Colors.BRIGHT_BLUE}└{'─' * (box_width - 2)}┘{Colors.RESET}"
         else:
-            top = f"{Colors.BRIGHT_BLUE}┌{'─' * (box_width - 2)}┐{Colors.RESET}"
-        
-        # Content lines
-        content_lines = []
-        for line in lines:
-            padding = box_width - len(line) - 4
-            content_lines.append(f"{Colors.BRIGHT_BLUE}│{Colors.RESET} {line}{' ' * padding} {Colors.BRIGHT_BLUE}│{Colors.RESET}")
-        
-        # Bottom border
-        bottom = f"{Colors.BRIGHT_BLUE}└{'─' * (box_width - 2)}┘{Colors.RESET}"
+            # ASCII version
+            if title:
+                title_padding = (box_width - len(title) - 4) // 2
+                top = f"{Colors.BRIGHT_BLUE}+-{title_padding * '-'} {Colors.BRIGHT_WHITE}{title}{Colors.BRIGHT_BLUE} {title_padding * '-'}-+{Colors.RESET}"
+            else:
+                top = f"{Colors.BRIGHT_BLUE}+{'-' * (box_width - 2)}+{Colors.RESET}"
+            
+            # Content lines
+            content_lines = []
+            for line in lines:
+                padding = box_width - len(line) - 4
+                content_lines.append(f"{Colors.BRIGHT_BLUE}|{Colors.RESET} {line}{' ' * padding} {Colors.BRIGHT_BLUE}|{Colors.RESET}")
+            
+            # Bottom border
+            bottom = f"{Colors.BRIGHT_BLUE}+{'-' * (box_width - 2)}+{Colors.RESET}"
         
         return f"{top}\n" + "\n".join(content_lines) + f"\n{bottom}"
     
@@ -95,17 +149,23 @@ class UI:
     def menu_item(text, selected=False, checked=None):
         """Create a styled menu item"""
         if selected:
-            prefix = f"{Colors.BG_BLUE}{Colors.BRIGHT_WHITE} ▶ "
+            prefix = f"{Colors.BG_BLUE}{Colors.BRIGHT_WHITE} > "
             suffix = f" {Colors.RESET}"
             
             if checked is not None:
-                checkbox = f"{Colors.BRIGHT_GREEN}[✓]{Colors.RESET}" if checked else f"{Colors.BRIGHT_RED}[ ]{Colors.RESET}"
+                if HAS_UNICODE_SUPPORT:
+                    checkbox = f"{Colors.BRIGHT_GREEN}[✓]{Colors.RESET}" if checked else f"{Colors.BRIGHT_RED}[ ]{Colors.RESET}"
+                else:
+                    checkbox = f"{Colors.BRIGHT_GREEN}[X]{Colors.RESET}" if checked else f"{Colors.BRIGHT_RED}[ ]{Colors.RESET}"
                 return f"{prefix}{checkbox} {text}{suffix}"
             else:
                 return f"{prefix}{text}{suffix}"
         else:
             if checked is not None:
-                checkbox = f"{Colors.BRIGHT_GREEN}[✓]" if checked else f"{Colors.DIM}[ ]"
+                if HAS_UNICODE_SUPPORT:
+                    checkbox = f"{Colors.BRIGHT_GREEN}[✓]" if checked else f"{Colors.DIM}[ ]"
+                else:
+                    checkbox = f"{Colors.BRIGHT_GREEN}[X]" if checked else f"{Colors.DIM}[ ]"
                 return f"   {checkbox}{Colors.RESET} {text}"
             else:
                 return f"   {Colors.DIM}{text}{Colors.RESET}"
@@ -113,27 +173,42 @@ class UI:
     @staticmethod
     def success(text):
         """Style success message"""
-        return f"{Colors.BRIGHT_GREEN}✓ {text}{Colors.RESET}"
+        if HAS_UNICODE_SUPPORT:
+            return f"{Colors.BRIGHT_GREEN}✓ {text}{Colors.RESET}"
+        else:
+            return f"{Colors.BRIGHT_GREEN}[OK] {text}{Colors.RESET}"
     
     @staticmethod
     def error(text):
         """Style error message"""
-        return f"{Colors.BRIGHT_RED}✗ {text}{Colors.RESET}"
+        if HAS_UNICODE_SUPPORT:
+            return f"{Colors.BRIGHT_RED}✗ {text}{Colors.RESET}"
+        else:
+            return f"{Colors.BRIGHT_RED}[ERROR] {text}{Colors.RESET}"
     
     @staticmethod
     def warning(text):
         """Style warning message"""
-        return f"{Colors.BRIGHT_YELLOW}⚠ {text}{Colors.RESET}"
+        if HAS_UNICODE_SUPPORT:
+            return f"{Colors.BRIGHT_YELLOW}⚠ {text}{Colors.RESET}"
+        else:
+            return f"{Colors.BRIGHT_YELLOW}[WARNING] {text}{Colors.RESET}"
     
     @staticmethod
     def info(text):
         """Style info message"""
-        return f"{Colors.BRIGHT_CYAN}ℹ {text}{Colors.RESET}"
+        if HAS_UNICODE_SUPPORT:
+            return f"{Colors.BRIGHT_CYAN}ℹ {text}{Colors.RESET}"
+        else:
+            return f"{Colors.BRIGHT_CYAN}[INFO] {text}{Colors.RESET}"
     
     @staticmethod
     def prompt(text):
         """Style user prompt"""
-        return f"{Colors.BRIGHT_WHITE}► {text}{Colors.RESET}"
+        if HAS_UNICODE_SUPPORT:
+            return f"{Colors.BRIGHT_WHITE}► {text}{Colors.RESET}"
+        else:
+            return f"{Colors.BRIGHT_WHITE}> {text}{Colors.RESET}"
     
     @staticmethod
     def highlight(text):
@@ -154,13 +229,18 @@ class UI:
             percentage = current / total
         
         filled = int(width * percentage)
-        bar = "█" * filled + "░" * (width - filled)
+        if HAS_UNICODE_SUPPORT:
+            bar = "█" * filled + "░" * (width - filled)
+        else:
+            bar = "=" * filled + "-" * (width - filled)
         
         return f"{Colors.BRIGHT_CYAN}[{bar}] {percentage:.1%}{Colors.RESET}"
     
     @staticmethod
-    def separator(width=60, char="─"):
+    def separator(width=60, char=None):
         """Create a separator line"""
+        if char is None:
+            char = "─" if HAS_UNICODE_SUPPORT else "-"
         return f"{Colors.DIM}{char * width}{Colors.RESET}"
     
     @staticmethod
@@ -171,12 +251,23 @@ class UI:
     @staticmethod
     def logo():
         """ASCII logo for Flite"""
-        return f"""{Colors.BRIGHT_CYAN}
+        if HAS_UNICODE_SUPPORT:
+            return f"""{Colors.BRIGHT_RED}
     ███████╗██╗     ██╗████████╗███████╗
     ██╔════╝██║     ██║╚══██╔══╝██╔════╝
     █████╗  ██║     ██║   ██║   █████╗  
     ██╔══╝  ██║     ██║   ██║   ██╔══╝  
     ██║     ███████╗██║   ██║   ███████╗
     ╚═╝     ╚══════╝╚═╝   ╚═╝   ╚══════╝
-    {Colors.BRIGHT_WHITE}Flask Project Generator{Colors.RESET}
+    {Colors.BRIGHT_RED}Flask Project Generator{Colors.RESET}
+    """
+        else:
+            return f"""{Colors.BRIGHT_RED}
+    ########  ##      ##  ########  ########
+    ##    ##  ##      ##  ##    ##  ##      
+    ########  ##      ##  ########  ########
+    ##    ##  ##      ##  ##    ##  ##      
+    ########  ##########  ########  ########
+    ##    ##  ##      ##  ##    ##  ##      
+    {Colors.BRIGHT_RED}Flask Project Generator{Colors.RESET}
     """

@@ -26,10 +26,10 @@ cd flite
 pip install -e .
 ```
 
-### Install with pip (when available on PyPI)
+### Install with pip (when available on PyPI) !!!!! NOT Available!!!!
 
 ```bash
-pip install flite
+pip install flite------------------
 ```
 
 ## 📖 Usage
